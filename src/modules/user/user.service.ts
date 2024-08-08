@@ -5,15 +5,21 @@ import * as moment from 'moment';
 import { Model } from 'mongoose';
 import { User } from 'src/schemas/user.schema';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { BlockService } from '../block/block.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
   private redisClient: Redis;
 
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private configService: ConfigService,
+    private blockService: BlockService,
+  ) {
     this.redisClient = new Redis({
-      host: 'localhost',
-      port: 6380,
+      host: this.configService.get<string>('REDIS_HOST', 'localhost'),
+      port: this.configService.get<number>('REDIS_PORT', 6379),
     });
   }
 
@@ -64,19 +70,33 @@ export class UserService {
     await this.redisClient.del(`user:${id}`);
   }
 
-  async search(username?: string, minAge?: number, maxAge?: number) {
-    const query: any = {};
+  async search(
+    userId: string,
+    username?: string,
+    minAge?: number,
+    maxAge?: number,
+  ) {
+    const blockedUserIds = await this.blockService.getBlockedUserIds(userId);
+
+    const query: any = { _id: { $nin: blockedUserIds } };
+
     if (username) query.username = new RegExp(username, 'i');
-    if (minAge)
-      query.birthdate = {
-        ...query.birthdate,
-        $gte: moment().subtract(minAge, 'years').toDate(),
-      };
-    if (maxAge)
-      query.birthdate = {
-        ...query.birthdate,
-        $lte: moment().subtract(maxAge, 'years').toDate(),
-      };
+
+    const birthdateQuery: any = {};
+
+    if (minAge) {
+      console.log('years', moment().subtract(minAge, 'years').toDate());
+      birthdateQuery.$lte = moment().subtract(minAge, 'years').toDate();
+    }
+
+    if (maxAge) {
+      birthdateQuery.$gte = moment().subtract(maxAge, 'years').toDate();
+    }
+
+    if (Object.keys(birthdateQuery).length > 0) {
+      query.birthdate = birthdateQuery;
+    }
+
     const users = await this.userModel.find(query).exec();
     return users;
   }

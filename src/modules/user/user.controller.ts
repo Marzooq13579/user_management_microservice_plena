@@ -7,9 +7,11 @@ import {
   Param,
   Delete,
   Query,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { CustomRequest } from 'src/middlewares/jwt.middleware';
 
 @Controller('users')
 export class UserController {
@@ -20,14 +22,26 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Get()
-  findAll() {
-    return this.userService.findAllUsers();
+  @Get('search')
+  search(
+    @Req() req: CustomRequest,
+    @Query('username') username?: string,
+    @Query('minAge') minAge?: number,
+    @Query('maxAge') maxAge?: number,
+  ) {
+    const userId = req.user?.id;
+    console.log('userId in user controller is', userId);
+    return this.userService.search(userId, username, minAge, maxAge);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOneUser(@Param('id') id: string) {
     return this.userService.findOneUser(id);
+  }
+
+  @Get()
+  findAllUsers() {
+    return this.userService.findAllUsers();
   }
 
   @Patch(':id')
@@ -38,14 +52,5 @@ export class UserController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.removeUser(id);
-  }
-
-  @Get('search')
-  search(
-    @Query('username') username?: string,
-    @Query('minAge') minAge?: number,
-    @Query('maxAge') maxAge?: number,
-  ) {
-    return this.userService.search(username, minAge, maxAge);
   }
 }
