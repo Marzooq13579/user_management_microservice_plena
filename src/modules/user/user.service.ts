@@ -44,7 +44,12 @@ export class UserService {
       throw new NotFoundException(`user_id_${id}_not_found`);
     }
 
-    await this.redisClient.set(`user:${id}`, JSON.stringify(foundUser));
+    await this.redisClient.set(
+      `user:${id}`,
+      JSON.stringify(foundUser),
+      'EX',
+      43200,
+    ); // cache for 12 hours
     return foundUser;
   }
 
@@ -76,6 +81,13 @@ export class UserService {
     minAge?: number,
     maxAge?: number,
   ) {
+    const cacheKey = `search:${userId}:${username || ''}:${minAge || ''}:${maxAge || ''}`;
+
+    const cachedResults = await this.redisClient.get(cacheKey);
+    if (cachedResults) {
+      return JSON.parse(cachedResults);
+    }
+
     const blockedUserIds = await this.blockService.getBlockedUserIds(userId);
 
     const query: any = { _id: { $nin: blockedUserIds } };
@@ -97,6 +109,9 @@ export class UserService {
     }
 
     const users = await this.userModel.find(query).exec();
+
+    await this.redisClient.set(cacheKey, JSON.stringify(users), 'EX', 3600); // Cache for 1 hour
+
     return users;
   }
 }
