@@ -1,7 +1,9 @@
 import { Controller, Post, Delete, Param, Req } from '@nestjs/common';
 import { BlockService } from './block.service';
 import { CustomRequest } from 'src/middlewares/jwt.middleware';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Block/unBlock User')
 @Controller('block')
 export class BlockController {
   constructor(private readonly blockService: BlockService) {}

@@ -12,7 +12,9 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { CustomRequest } from 'src/middlewares/jwt.middleware';
-
+import { ApiTags } from '@nestjs/swagger';
+import { SearchUserDto } from './dto/search-user.dto';
+@ApiTags('users')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -23,14 +25,9 @@ export class UserController {
   }
 
   @Get('search')
-  search(
-    @Req() req: CustomRequest,
-    @Query('username') username?: string,
-    @Query('minAge') minAge?: number,
-    @Query('maxAge') maxAge?: number,
-  ) {
+  search(@Req() req: CustomRequest, @Query() searchUserDto: SearchUserDto) {
     const userId = req.user?.id;
-    console.log('userId in user controller is', userId);
+    const { username, minAge, maxAge } = searchUserDto;
     return this.userService.search(userId, username, minAge, maxAge);
   }
 

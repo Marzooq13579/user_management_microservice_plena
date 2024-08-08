@@ -85,7 +85,6 @@ export class UserService {
     const birthdateQuery: any = {};
 
     if (minAge) {
-      console.log('years', moment().subtract(minAge, 'years').toDate());
       birthdateQuery.$lte = moment().subtract(minAge, 'years').toDate();
     }
 
