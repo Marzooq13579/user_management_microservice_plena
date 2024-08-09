@@ -37,7 +37,7 @@ cd user_management_microservice_plena
 
 ### 2. Create a new .env file with .env.example file contents in it
 
-### 3. Run DOCKER File
+### 3. Run 
 
 ```bash
 #run docker containers
