@@ -6,6 +6,8 @@ import { BlockModule } from './modules/block/block.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtMiddleware } from './middlewares/jwt.middleware';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RedisService } from './modules/redis/redis.service';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -15,15 +17,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI'),
+        uri:
+          configService.get<string>('MONGODB_URI') ||
+          'mongodb://localhost:27019/userManagementService',
       }),
       inject: [ConfigService],
     }),
     UserModule,
     BlockModule,
+    RedisModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, RedisService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

@@ -1,4 +1,4 @@
-import { IsString, IsDate, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsDateString } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -33,9 +33,9 @@ export class CreateUserDto {
     type: String,
     format: 'date-time',
   })
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
-  birthdate: Date;
+  birthdate: string;
 }
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {}

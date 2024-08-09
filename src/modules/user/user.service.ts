@@ -1,31 +1,36 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import Redis from 'ioredis';
 import * as moment from 'moment';
 import { Model } from 'mongoose';
 import { User } from 'src/schemas/user.schema';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { BlockService } from '../block/block.service';
 import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../redis/redis.service';
+import {
+  invalidateAllSearchCaches,
+  invalidateParticularUserCache,
+} from 'src/utils/invalidateUserCache';
 
 @Injectable()
-export class UserService {
-  private redisClient: Redis;
+export class UserService implements OnModuleInit {
+  private redisClient;
 
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private configService: ConfigService,
     private blockService: BlockService,
-  ) {
-    this.redisClient = new Redis({
-      host: this.configService.get<string>('REDIS_HOST', 'localhost'),
-      port: this.configService.get<number>('REDIS_PORT', 6379),
-    });
+    private redisService: RedisService,
+  ) {}
+
+  onModuleInit() {
+    this.redisClient = this.redisService.getClient();
   }
 
   async create(createUserDto: CreateUserDto) {
     const createdUser = new this.userModel(createUserDto);
     await createdUser.save();
+    await invalidateAllSearchCaches(this.redisClient);
     return createdUser;
   }
 
@@ -63,6 +68,7 @@ export class UserService {
     }
 
     await this.redisClient.set(`user:${id}`, JSON.stringify(updatedUser));
+    await invalidateAllSearchCaches(this.redisClient);
     return updatedUser;
   }
 
@@ -73,6 +79,8 @@ export class UserService {
     }
 
     await this.redisClient.del(`user:${id}`);
+    await invalidateAllSearchCaches(this.redisClient);
+    await invalidateParticularUserCache(this.redisClient, id);
   }
 
   async search(
