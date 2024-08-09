@@ -54,3 +54,5 @@ This command will start the MongoDB and Redis containers, as well as the Nest.js
 Server will run at `http://localhost:3000`.
 
 ### 5. Swagger UI will be accessible at `http://localhost:3000/api` in your web browser
+
+Note: Search Route and Block/Unblock Route require a JWT token to be included in the request for personalized results.

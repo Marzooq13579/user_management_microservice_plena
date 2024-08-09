@@ -4,7 +4,6 @@ import { Logger } from '@nestjs/common';
  * General function to invalidate cache based on a pattern
  * @param {Object} redisClient - The Redis client instance
  * @param {string} pattern - The pattern to match cache keys
- * @param {string} logMessage - Custom log message for the action
  * @param {string} errorMessage - Custom error message for failure
  */
 async function invalidateCache(
